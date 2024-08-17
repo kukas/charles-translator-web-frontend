@@ -1,5 +1,5 @@
 import { IsoLanguage } from "./IsoLanguage";
-import { Message } from "./Message";
+import { Translatable } from "./Translatable";
 import { TranslationError } from "./TranslationError";
 
 /**
@@ -20,5 +20,5 @@ export interface TranslationStep {
   /**
    * Execute the translation on a given message by a user
    */
-  executeOn(message: Message): Promise<Message | TranslationError>;
+  executeOn(translatable: Translatable): Promise<Translatable | TranslationError>;
 }

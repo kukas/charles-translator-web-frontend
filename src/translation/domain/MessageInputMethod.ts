@@ -37,4 +37,9 @@ export enum MessageInputMethod {
    * during pivoted translation
    */
   Translation = "translation",
+
+  /**
+   * The request is an uploaded file
+   */
+  DocumentUpload = "document-upload",
 }

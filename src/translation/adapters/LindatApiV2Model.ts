@@ -1,11 +1,14 @@
 import { IsoLanguage } from "../domain/IsoLanguage";
+import { Document } from "../domain/Document";
 import { Message } from "../domain/Message";
+import { Translatable } from "../domain/Translatable";
 import { TranslationError } from "../domain/TranslationError";
 import { TranslationErrorCode } from "../domain/TranslationErrorCode";
 import { TranslationStep } from "../domain/TranslationStep";
 
+// TODO: Replace this with the actual API URL
 const BASE_API_URL =
-  "https://lindat.mff.cuni.cz/services/translation/api/v2/languages/";
+  "http://localhost:5000/api/v2/languages/";
 
 const API_URL = BASE_API_URL + "?frontend=u4u";
 
@@ -18,16 +21,7 @@ export class LindatApiV2Model implements TranslationStep {
     this.target = target;
   }
 
-  public async executeOn(
-    message: Message,
-  ): Promise<Message | TranslationError> {
-    if (message.language !== this.origin) {
-      throw Error(
-        `The given message language is '${message.language}' ` +
-          `but this translation step expects '${this.origin}'.`,
-      );
-    }
-
+  private async translateMessage(message: Message): Promise<Message | TranslationError> {
     // skip the API request for empty messages
     if (message.text.trim() === "") {
       return message.makeTranslation(this.target, "");
@@ -99,5 +93,46 @@ export class LindatApiV2Model implements TranslationStep {
         "Backend request failed.",
       );
     }
+  }
+
+  private async translateDocument(document: Document): Promise<Document | TranslationError> {
+    const data = new FormData();
+    data.append("input_text", document.file);
+    data.append("src", this.origin);
+    data.append("tgt", this.target);
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        Accept: "application/json"
+      },
+      body: data,
+    });
+    const blob = await response.blob();
+    const filename = document.file.name.split(".");
+    const translated_filename = filename[0] + "." + this.target + "." + filename[1];
+    const translated_file = new File([blob], translated_filename, { type: blob.type });
+
+    return document.makeTranslation(this.target, translated_file);
+  }
+
+  public async executeOn(
+    message: Translatable,
+  ): Promise<Translatable | TranslationError> {
+    if (message.language !== this.origin) {
+      throw Error(
+        `The given message language is '${message.language}' ` +
+          `but this translation step expects '${this.origin}'.`,
+      );
+    }
+
+    if (message instanceof Message) {
+      return this.translateMessage(message);
+    }
+
+    if (message instanceof Document) {
+      return this.translateDocument(message);
+    }
+
+    throw Error("Unsupported message type.");
   }
 }

@@ -6,27 +6,28 @@ import { User } from "./User";
 /**
  * A message in a specific language that can be translated to some other language
  */
-export class Message extends Translatable {
+export class Document extends Translatable {
   /**
-   * Plain-text body of the message
+   * File object containing the document
    */
-  public readonly text: string;
+  public readonly file: File;
 
   constructor(data: {
     language: IsoLanguage;
-    text: string;
+    file: File;
     author: User;
     isOriginal: boolean;
     originalInputMethod: MessageInputMethod;
   }) {
     super(data.language, data.author, data.isOriginal, data.originalInputMethod);
-    this.text = data.text;
+    this.file = data.file;
   }
 
-  public makeTranslation(newLanguage: IsoLanguage, newText: string): Message {
-    return new Message({
+
+  public makeTranslation(newLanguage: IsoLanguage, newFile: File): Document {
+    return new Document({
       language: newLanguage,
-      text: newText,
+      file: newFile,
       author: this.author,
       isOriginal: false, // it's been translated so it's definitely not original
       originalInputMethod: this.originalInputMethod,

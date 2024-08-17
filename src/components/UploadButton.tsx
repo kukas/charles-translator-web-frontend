@@ -5,8 +5,9 @@ import { UploadFile } from '@mui/icons-material';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
-const allowedFileTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.pdf', '.pptx', '.xlsx', '.docx'];
+// TODO: Review allowed file types and extensions
+const allowedFileTypes = ['text/plain', 'application/pdf', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.oasis.opendocument.text', 'application/wps-office.docx'];
+const allowedFileExtensions = ['.txt', '.pdf', '.pptx', '.xlsx', '.docx'];
 const maxFileSizeMB = 5;
 const UploadButton = ({ onFileSelect }) => {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -36,8 +37,8 @@ const UploadButton = ({ onFileSelect }) => {
   return (
     <div>
       <Button variant="text" size="small" startIcon={<UploadFile />} component="label">
-        Upload
-        <input type="file" hidden onChange={handleFileChange} accept="application/pdf, application/vnd.openxmlformats-officedocument.presentationml.presentation, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.openxmlformats-officedocument.wordprocessingml.document, .pdf, .pptx, .xlsx, .docx" />
+        Select&nbsp;file
+        <input type="file" hidden onChange={handleFileChange} />
       </Button>
       <ToastContainer />
     </div>

@@ -1,5 +1,5 @@
 import { IsoLanguage } from "./IsoLanguage";
-import { Message } from "./Message";
+import { Translatable } from "./Translatable";
 import { TranslationError } from "./TranslationError";
 import { TranslationStep } from "./TranslationStep";
 
@@ -46,18 +46,18 @@ export class TranslationPath {
    * Execute the translation on a given message
    */
   public async executeOn(
-    message: Message,
-  ): Promise<Message | TranslationError> {
+    translatable: Translatable,
+  ): Promise<Translatable | TranslationError> {
     for (const step of this.steps) {
-      const intermediateResult = await step.executeOn(message);
+      const intermediateResult = await step.executeOn(translatable);
 
       if (intermediateResult instanceof TranslationError) {
         return intermediateResult;
       } else {
-        message = intermediateResult;
+        translatable = intermediateResult;
       }
     }
 
-    return message;
+    return translatable;
   }
 }

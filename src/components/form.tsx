@@ -26,6 +26,7 @@ import { userPreferencesRepository } from "../persistence/UserPreferencesReposit
 
 import { translationGraph } from "../translation";
 import { Message } from "../translation/domain/Message";
+import { Document } from "../translation/domain/Document";
 import { MessageInputMethod } from "../translation/domain/MessageInputMethod";
 import { User } from "../translation/domain/User";
 import { IsoLanguage } from "../translation/domain/IsoLanguage";
@@ -69,7 +70,7 @@ const Form = () => {
     const [loadingError, setLoadingError] = useState<string | null>(null)
 
     // file upload
-    const [file, setFile] = useState<File | null>(null);
+    const [sourceFile, setSourceFile] = useState<File | null>(null);
 
     ////////////////////////////
     // Performing translation //
@@ -200,6 +201,66 @@ const Form = () => {
         writeHistoryDebounced(text, from, to);
     }
 
+    function requestDocumentTranslation(
+        file: File,
+        from: IsoLanguage,
+        to: IsoLanguage,
+    ) {
+        setLoading(true);
+        performDocumentTranslation(file, from, to);
+    }
+
+    const performDocumentTranslation = useCallback(async (
+        file: File,
+        from: IsoLanguage,
+        to: IsoLanguage,
+    ) => {
+        // TODO: we repeat the same logic as in performTranslation! Refactor
+
+        // find the translation path
+        const translationPath = translationGraph.getPath(from, to);
+        if (translationPath === null) {
+            setLoadingError("Cannot translate between these two languages.");
+            setLoading(false);
+            return;
+        }
+
+        // prepare message author metadata
+        const privacyPreferences = privacyPreferencesRepository.load();
+        const userPreferences = userPreferencesRepository.load();
+        const author = new User(
+            privacyPreferences?.allowsDataCollection ?? false,
+            userPreferences.organizationName
+        );
+        
+        // do the API call(s)
+        const result = await translationPath.executeOn(new Document({
+            language: from,
+            file: file,
+            author: author,
+            isOriginal: true,
+            originalInputMethod: MessageInputMethod.DocumentUpload
+        }));
+
+        setLoading(false);
+
+        // process any errors
+        if (result instanceof TranslationError) {
+            setTargetText("");
+            setLoadingError(result.message);
+            console.error(result);
+        }
+
+        // process a successful response
+        if (result instanceof Document) {
+            setTargetText("File translated TODO ADD BUTTON");
+            // start File download
+            const url = URL.createObjectURL(result.file);
+            window.open(url, '_blank');
+
+            setLoadingError(null);
+        }
+    }, []);
 
     //////////////////////
     // Focus management //
@@ -254,16 +315,15 @@ const Form = () => {
     }
 
     function handleFileSelect(file: File) {
-        setFile(file);
+        setSourceFile(file);
     }
 
     function handleFileSubmit() {
-        if (file === null) {
+        if (sourceFile === null) {
             setLoadingError("No file selected.");
             return;
         }
-        alert('File submitted');
-        // requestDocumentTranslation(file, sourceLanguage, targetLanguage);
+        requestDocumentTranslation(sourceFile, sourceLanguage, targetLanguage);
     }
 
     function handleAsrIntermediateInput(text: string) {
@@ -483,13 +543,13 @@ const Form = () => {
                         />
                     </div>
                 </div>
-                {file ? (
+                {sourceFile ? (
                     <UploadFileStatus
-                    file={file}
+                    file={sourceFile}
                     isUploading={false}
                     uploadError={null}
                     uploadProgress={0}
-                    onRemoveClick={() => setFile(null)}
+                    onRemoveClick={() => setSourceFile(null)}
                     onUploadClick={() => handleFileSubmit()}
                     />
                 ) : (
