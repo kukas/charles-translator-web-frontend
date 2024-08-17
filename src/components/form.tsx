@@ -30,8 +30,10 @@ import { MessageInputMethod } from "../translation/domain/MessageInputMethod";
 import { User } from "../translation/domain/User";
 import { IsoLanguage } from "../translation/domain/IsoLanguage";
 import { TranslationError } from '../translation/domain/TranslationError'
+import UploadButton from './UploadButton';
 
 import styles from "./form.module.scss";
+import { UploadFileStatus } from './UploadFileStatus'
 
 const TRANSLATION_DEBOUNCE_MS = 500;
 const WRITE_HISTORY_DEBOUNCE_MS = 3_000;
@@ -66,6 +68,8 @@ const Form = () => {
     const [loading, setLoading] = useState<boolean>(false)
     const [loadingError, setLoadingError] = useState<string | null>(null)
 
+    // file upload
+    const [file, setFile] = useState<File | null>(null);
 
     ////////////////////////////
     // Performing translation //
@@ -247,6 +251,19 @@ const Form = () => {
             targetLanguage,
             inputMethod
         );
+    }
+
+    function handleFileSelect(file: File) {
+        setFile(file);
+    }
+
+    function handleFileSubmit() {
+        if (file === null) {
+            setLoadingError("No file selected.");
+            return;
+        }
+        alert('File submitted');
+        // requestDocumentTranslation(file, sourceLanguage, targetLanguage);
     }
 
     function handleAsrIntermediateInput(text: string) {
@@ -450,6 +467,9 @@ const Form = () => {
                         languages={sourceLanguages}
                         onChange={changeSourceLanguage}
                     />
+                    <div>
+                    <UploadButton onFileSelect={handleFileSelect}></UploadButton>
+                    </div>
                     <div className={styles.asrTempOutput}>{asrIntermediateText}</div>
                     <div /*className={styles.asrContainer}*/>
                         <ASR
@@ -463,6 +483,16 @@ const Form = () => {
                         />
                     </div>
                 </div>
+                {file ? (
+                    <UploadFileStatus
+                    file={file}
+                    isUploading={false}
+                    uploadError={null}
+                    uploadProgress={0}
+                    onRemoveClick={() => setFile(null)}
+                    onUploadClick={() => handleFileSubmit()}
+                    />
+                ) : (
                 <TextField
                     value={sourceText}
                     label=" "
@@ -490,6 +520,7 @@ const Form = () => {
                         ),
                     }}
                 />
+                )}
             </Paper>
 
             <div className={styles.switchButtonWrapper}>
