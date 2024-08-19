@@ -32,4 +32,9 @@ export enum TranslationErrorCode {
    * Translation process took too long and timed out
    */
   TranslationTimeout = 5,
+
+  /**
+   * Document file type is not supported
+   */
+  UnsupportedFileType = 6,
 }

@@ -131,6 +131,12 @@ export class LindatApiV2Model implements TranslationStep {
         );
       }
 
+      if (response.status === 415) {
+        return new TranslationError(
+          TranslationErrorCode.UnsupportedFileType,
+          "Document file type is not supported.",
+        );
+      }
       if (response.status === 504) {
         return new TranslationError(
           TranslationErrorCode.TranslationTimeout,
