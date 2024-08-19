@@ -21,6 +21,29 @@ export class LindatApiV2Model implements TranslationStep {
     this.target = target;
   }
 
+  private async handleErrorResponse(error: Error | TranslationError): Promise<TranslationError> {
+    // NOTE: TranslationError is not an instance of Error, hence the type
+
+    if (error instanceof SyntaxError) {
+      return new TranslationError(
+        TranslationErrorCode.InvalidServerResponseFormat,
+        "The response from the backend server has unexpected format.",
+      );
+    }
+
+    if (error instanceof Error) {
+      return new TranslationError(
+        TranslationErrorCode.Failed,
+        `Backend request failed: [${error.name}] ${error.message}`,
+      );
+    }
+
+    return new TranslationError(
+      TranslationErrorCode.Failed,
+      "Backend request failed.",
+    );
+  }
+
   private async translateMessage(message: Message): Promise<Message | TranslationError> {
     // skip the API request for empty messages
     if (message.text.trim() === "") {
@@ -74,24 +97,7 @@ export class LindatApiV2Model implements TranslationStep {
         "Translation backend responded with a non-200 status code.",
       );
     } catch (error) {
-      if (error instanceof SyntaxError) {
-        return new TranslationError(
-          TranslationErrorCode.InvalidServerResponseFormat,
-          "The response from the backend server has unexpected format.",
-        );
-      }
-
-      if (error instanceof Error) {
-        return new TranslationError(
-          TranslationErrorCode.Failed,
-          `Backend request failed: [${error.name}] ${error.message}`,
-        );
-      }
-
-      return new TranslationError(
-        TranslationErrorCode.Failed,
-        "Backend request failed.",
-      );
+      return this.handleErrorResponse(error);
     }
   }
 
@@ -100,19 +106,45 @@ export class LindatApiV2Model implements TranslationStep {
     data.append("input_text", document.file);
     data.append("src", this.origin);
     data.append("tgt", this.target);
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        Accept: "application/json"
-      },
-      body: data,
-    });
-    const blob = await response.blob();
-    const filename = document.file.name.split(".");
-    const translated_filename = filename[0] + "." + this.target + "." + filename[1];
-    const translated_file = new File([blob], translated_filename, { type: blob.type });
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          Accept: "application/json"
+        },
+        body: data,
+      });
 
-    return document.makeTranslation(this.target, translated_file);
+      if (response.ok) {
+        const blob = await response.blob();
+        const filename = document.file.name.split(".");
+        const translated_filename = filename[0] + "." + this.target + "." + filename[1];
+        const translated_file = new File([blob], translated_filename, { type: blob.type });
+
+        return document.makeTranslation(this.target, translated_file);
+      }
+
+      if (response.status === 413) {
+        return new TranslationError(
+          TranslationErrorCode.MessageTooLarge,
+          "Document to be translated is too large.",
+        );
+      }
+
+      if (response.status === 504) {
+        return new TranslationError(
+          TranslationErrorCode.TranslationTimeout,
+          "Translation process took too long and timed out.",
+        );
+      }
+
+      return new TranslationError(
+        TranslationErrorCode.Failed,
+        "Translation backend responded with a non-200 status code.",
+      );
+    } catch (error) {
+      return this.handleErrorResponse(error);
+    }
   }
 
   public async executeOn(
