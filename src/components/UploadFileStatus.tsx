@@ -17,23 +17,7 @@ export function UploadFileStatus(props: UploadFileStatusProps, ) {
         {props.file.name}
       </Typography>
       <Typography variant="body2">File Size: {(props.file.size / 1024).toFixed(2)} KB</Typography>
-      <Typography variant="body2">File Type: {props.file.type}</Typography>
-      {props.isUploading ? (
-        <CircularProgress size={16} sx={{ mr: 1 }} />
-      ) : props.uploadError ? (
-        <Error color="error" fontSize="small" sx={{ mr: 1 }} />
-      ) : (
-        <Check color="success" fontSize="small" sx={{ mr: 1 }} />
-      )}
-      {props.uploadError ? (
-        <Typography variant="body2" color="error">
-          {props.uploadError}
-        </Typography>
-      ) : (
-        <Typography variant="body2">
-          {props.isUploading ? `${props.uploadProgress}%` : 'Uploaded'}
-        </Typography>
-      )}
+      <Typography variant="body2" sx={{ mb: 3 }}>File Type: {props.file.type}</Typography>
       <Box display="flex">
         <Button variant="outlined" onClick={props.onRemoveClick} sx={{ mr: 1 }}>Remove File</Button>
         <Button variant="contained" onClick={props.onUploadClick}>Upload File</Button>
