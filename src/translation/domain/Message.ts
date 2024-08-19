@@ -19,7 +19,12 @@ export class Message extends Translatable {
     isOriginal: boolean;
     originalInputMethod: MessageInputMethod;
   }) {
-    super(data.language, data.author, data.isOriginal, data.originalInputMethod);
+    super(
+      data.language,
+      data.author,
+      data.isOriginal,
+      data.originalInputMethod,
+    );
     this.text = data.text;
   }
 

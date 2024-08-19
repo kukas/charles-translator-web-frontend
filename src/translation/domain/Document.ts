@@ -19,10 +19,14 @@ export class Document extends Translatable {
     isOriginal: boolean;
     originalInputMethod: MessageInputMethod;
   }) {
-    super(data.language, data.author, data.isOriginal, data.originalInputMethod);
+    super(
+      data.language,
+      data.author,
+      data.isOriginal,
+      data.originalInputMethod,
+    );
     this.file = data.file;
   }
-
 
   public makeTranslation(newLanguage: IsoLanguage, newFile: File): Document {
     return new Document({

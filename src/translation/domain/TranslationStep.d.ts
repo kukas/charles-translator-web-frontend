@@ -20,5 +20,7 @@ export interface TranslationStep {
   /**
    * Execute the translation on a given message by a user
    */
-  executeOn(translatable: Translatable): Promise<Translatable | TranslationError>;
+  executeOn(
+    translatable: Translatable,
+  ): Promise<Translatable | TranslationError>;
 }

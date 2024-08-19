@@ -7,8 +7,7 @@ import { TranslationErrorCode } from "../domain/TranslationErrorCode";
 import { TranslationStep } from "../domain/TranslationStep";
 
 // TODO: Replace this with the actual API URL
-const BASE_API_URL =
-  "http://localhost:5000/api/v2/languages/";
+const BASE_API_URL = "http://localhost:5000/api/v2/languages/";
 
 const API_URL = BASE_API_URL + "?frontend=u4u";
 
@@ -21,7 +20,9 @@ export class LindatApiV2Model implements TranslationStep {
     this.target = target;
   }
 
-  private async handleErrorResponse(error: Error | TranslationError): Promise<TranslationError> {
+  private async handleErrorResponse(
+    error: Error | TranslationError,
+  ): Promise<TranslationError> {
     // NOTE: TranslationError is not an instance of Error, hence the type
 
     if (error instanceof SyntaxError) {
@@ -44,7 +45,9 @@ export class LindatApiV2Model implements TranslationStep {
     );
   }
 
-  private async translateMessage(message: Message): Promise<Message | TranslationError> {
+  private async translateMessage(
+    message: Message,
+  ): Promise<Message | TranslationError> {
     // skip the API request for empty messages
     if (message.text.trim() === "") {
       return message.makeTranslation(this.target, "");
@@ -101,7 +104,9 @@ export class LindatApiV2Model implements TranslationStep {
     }
   }
 
-  private async translateDocument(document: Document): Promise<Document | TranslationError> {
+  private async translateDocument(
+    document: Document,
+  ): Promise<Document | TranslationError> {
     const data = new FormData();
     data.append("input_text", document.file);
     data.append("src", this.origin);
@@ -110,7 +115,7 @@ export class LindatApiV2Model implements TranslationStep {
       const response = await fetch(API_URL, {
         method: "POST",
         headers: {
-          Accept: "application/json"
+          Accept: "application/json",
         },
         body: data,
       });
@@ -118,8 +123,10 @@ export class LindatApiV2Model implements TranslationStep {
       if (response.ok) {
         const blob = await response.blob();
         const filename = document.file.name.split(".");
-        const translated_filename = filename[0] + "." + this.target + "." + filename[1];
-        const translated_file = new File([blob], translated_filename, { type: blob.type });
+        const new_name = filename[0] + "." + this.target + "." + filename[1];
+        const translated_file = new File([blob], new_name, {
+          type: blob.type,
+        });
 
         return document.makeTranslation(this.target, translated_file);
       }
