@@ -35,6 +35,7 @@ import UploadButton from './UploadButton';
 
 import styles from "./form.module.scss";
 import { UploadFileStatus } from './UploadFileStatus'
+import { DownloadFile } from './DownloadFile'
 
 const TRANSLATION_DEBOUNCE_MS = 500;
 const WRITE_HISTORY_DEBOUNCE_MS = 3_000;
@@ -71,6 +72,7 @@ const Form = () => {
 
     // file upload
     const [sourceFile, setSourceFile] = useState<File | null>(null);
+    const [targetFile, setTargetFile] = useState<File | null>(null);
 
     ////////////////////////////
     // Performing translation //
@@ -253,11 +255,7 @@ const Form = () => {
 
         // process a successful response
         if (result instanceof Document) {
-            setTargetText("File translated TODO ADD BUTTON");
-            // start File download
-            const url = URL.createObjectURL(result.file);
-            window.open(url, '_blank');
-
+            setTargetFile(result.file);
             setLoadingError(null);
         }
     }, []);
@@ -315,7 +313,11 @@ const Form = () => {
     }
 
     function handleFileSelect(file: File) {
+        setSourceText("");
+        setTargetText("");
         setSourceFile(file);
+        setTargetFile(null);
+        setLoadingError(null);
     }
 
     function handleFileSubmit() {
@@ -324,6 +326,19 @@ const Form = () => {
             return;
         }
         requestDocumentTranslation(sourceFile, sourceLanguage, targetLanguage);
+    }
+
+    function handleDownloadClick(): void {
+        if (targetFile === null) {
+            return;
+        }
+        // start File download
+        const url = URL.createObjectURL(targetFile);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = targetFile.name;
+        a.click();
+        URL.revokeObjectURL(url);
     }
 
     function handleAsrIntermediateInput(text: string) {
@@ -366,12 +381,16 @@ const Form = () => {
      * Can be called after a network error to retry the translation
      */
     function retryTranslation() {
-        requestTranslation(
-            sourceText,
-            sourceLanguage,
-            targetLanguage,
-            lastInputMethod
-        );
+        if (sourceFile !== null) {
+            requestDocumentTranslation(sourceFile, sourceLanguage, targetLanguage);
+        } else {
+            requestTranslation(
+                sourceText,
+                sourceLanguage,
+                targetLanguage,
+                lastInputMethod
+            );
+        }
     }
 
     /**
@@ -420,13 +439,19 @@ const Form = () => {
             }
             setTargetLanguage(newTarget);
         }
-
-        requestTranslation(
-            sourceText,
-            newSource,
-            newTarget,
-            MessageInputMethod.LanguageChanged
-        );
+        
+        if (targetFile !== null || sourceFile !== null) {
+            // clear the translated file if the source language changes
+            setTargetFile(null);
+        }
+        else {
+            requestTranslation(
+                sourceText,
+                newSource,
+                newTarget,
+                MessageInputMethod.LanguageChanged
+            );
+        }
     }
 
     /**
@@ -434,12 +459,18 @@ const Form = () => {
      */
     function changeTargetLanguage(newTarget: IsoLanguage) {
         setTargetLanguage(newTarget);
-        requestTranslation(
-            sourceText,
-            sourceLanguage,
-            newTarget,
-            MessageInputMethod.LanguageChanged
-        );
+        if (targetFile !== null || sourceFile !== null) {
+            // clear the translated file if the source language changes
+            setTargetFile(null);
+        }
+        else {
+            requestTranslation(
+                sourceText,
+                sourceLanguage,
+                newTarget,
+                MessageInputMethod.LanguageChanged
+            );
+        }
     }
 
     /**
@@ -457,10 +488,17 @@ const Form = () => {
             return;
         }
 
-        setSourceText(targetText);
-        setTargetText(sourceText); // to make an approx. translation immediately
         setSourceLanguage(targetLanguage);
         setTargetLanguage(sourceLanguage);
+
+        if (targetFile !== null || sourceFile !== null) {
+            // clear the translated file if languages are swapped
+            setTargetFile(null);
+            return;
+        }
+
+        setSourceText(targetText);
+        setTargetText(sourceText); // to make an approx. translation immediately
 
         focusSourceField();
 
@@ -518,6 +556,11 @@ const Form = () => {
         return null
     }
 
+    function handleSourceFileRemove(): void {
+        setSourceFile(null)
+        setTargetFile(null)
+    }
+
     return (
         <div className={styles.flex}>
             <Paper elevation={2} className={styles.translationFieldContainer}>
@@ -546,10 +589,9 @@ const Form = () => {
                 {sourceFile ? (
                     <UploadFileStatus
                     file={sourceFile}
-                    isUploading={false}
-                    uploadError={null}
-                    uploadProgress={0}
-                    onRemoveClick={() => setSourceFile(null)}
+                    uploadDisabled={loading || targetFile !== null}
+                    className={styles.sourceInput}
+                    onRemoveClick={() => handleSourceFileRemove()}
                     onUploadClick={() => handleFileSubmit()}
                     />
                 ) : (
@@ -634,19 +676,23 @@ const Form = () => {
                             </Button>
                         </div>
                     ) : (
-                        <div>
-                            <div className={styles.translationText}>
-                                {targetText.split('\n').map((item, i) => (
-                                    <p key={i} style={{ margin: 0 }}>
-                                        {item !== '' ? item : <br />}
-                                    </p>
-                                ))}
-                            </div>
+                        targetFile !== null ? (
+                            <DownloadFile file={targetFile} onDownloadClick={handleDownloadClick} />
+                        ) : (
+                            <div>
+                                <div className={styles.translationText}>
+                                    {targetText.split('\n').map((item, i) => (
+                                        <p key={i} style={{ margin: 0 }}>
+                                            {item !== '' ? item : <br />}
+                                        </p>
+                                    ))}
+                                </div>
 
-                            <div className={styles.transliteration}>
-                                {getTransliteration()}
+                                <div className={styles.transliteration}>
+                                    {getTransliteration()}
+                                </div>
                             </div>
-                        </div>
+                        )
                     )}
                 </div>
             </Paper>
