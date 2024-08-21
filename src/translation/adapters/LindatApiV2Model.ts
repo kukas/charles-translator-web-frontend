@@ -122,8 +122,13 @@ export class LindatApiV2Model implements TranslationStep {
 
       if (response.ok) {
         const blob = await response.blob();
-        const filename = document.file.name.split(".");
-        const new_name = filename[0] + "." + this.target + "." + filename[1];
+        const fullname = document.file.name;
+        let ext = fullname.split(".").pop();
+        if (ext == fullname || ext === undefined) {
+          ext = "";
+        }
+        const file = fullname.slice(0, fullname.length - ext.length - 1);
+        const new_name = file + "." + this.target + "." + ext;
         const translated_file = new File([blob], new_name, {
           type: blob.type,
         });
