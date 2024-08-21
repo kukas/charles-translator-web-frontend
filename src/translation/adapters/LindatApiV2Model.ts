@@ -117,9 +117,6 @@ export class LindatApiV2Model implements TranslationStep {
     try {
       const response = await fetch(API_URL, {
         method: "POST",
-        headers: {
-          Accept: "application/json",
-        },
         body: data,
       });
 
