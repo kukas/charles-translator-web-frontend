@@ -17,7 +17,7 @@ export function DownloadFile(props: DownloadFileProps) {
         {props.file.name}
       </Typography>
       <Typography variant="body2">
-        File Size: {(props.file.size / 1024).toFixed(2)} KB
+        File Size: {(props.file.size / 1024).toFixed(2)} KiB
       </Typography>
       <Box display="flex" sx={{ mt: 5 }}>
         <Button variant="contained" onClick={props.onDownloadClick}>

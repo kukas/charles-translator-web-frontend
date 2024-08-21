@@ -1,7 +1,7 @@
 import { ChangeEvent } from "react";
 import { Button } from "@mui/material";
 import { UploadFile } from "@mui/icons-material";
-import { MAX_CONTENT_LENGTH, MAX_CONTENT_LENGTH_MB } from "../translation/adapters/LindatApiV2Model";
+import { MAX_CONTENT_LENGTH, MAX_CONTENT_LENGTH_MiB } from "../translation/adapters/LindatApiV2Model";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -31,7 +31,7 @@ const UploadButton = ({ onFileSelect }) => {
     let file: File = event.target.files[0];
     // check file size
     if (file.size > MAX_CONTENT_LENGTH) {
-      toast.error(`Error: File size exceeds ${MAX_CONTENT_LENGTH_MB}MB.`);
+      toast.error(`Error: File size exceeds ${MAX_CONTENT_LENGTH_MiB} MiB.`);
       return;
     }
     // check allowed file types

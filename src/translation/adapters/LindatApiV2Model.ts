@@ -11,8 +11,11 @@ const BASE_API_URL = "http://localhost:5000/api/v2/languages/";
 
 const API_URL = BASE_API_URL + "?frontend=u4u";
 
-export const MAX_CONTENT_LENGTH = 5000 * 1024; // should match MAX_CONTENT_LENGTH in the backend
-export const MAX_CONTENT_LENGTH_MB = Math.round(MAX_CONTENT_LENGTH / 1e6);
+export const MAX_CONTENT_LENGTH = 5 * 1024 * 1024; // should match MAX_CONTENT_LENGTH in the backend
+export const MAX_CONTENT_LENGTH_MiB = MAX_CONTENT_LENGTH / 1024 / 1024;
+
+export const MAX_TEXT_LENGTH = 100 * 1024; // should match MAX_TEXT_LENGTH in the backend
+export const MAX_TEXT_LENGTH_KiB = MAX_TEXT_LENGTH / 1024;
 
 export class LindatApiV2Model implements TranslationStep {
   readonly origin: IsoLanguage;
@@ -141,14 +144,14 @@ export class LindatApiV2Model implements TranslationStep {
         if (json.message === "The data value transmitted exceeds the capacity limit.") {
           return new TranslationError(
             TranslationErrorCode.MessageTooLarge,
-            `Error: The document exceeds the maximum file size of ${MAX_CONTENT_LENGTH_MB}MB. Please reduce the file size and try again.`,
+            `Error: The document exceeds the maximum file size of ${MAX_CONTENT_LENGTH_MiB} MiB. Please reduce the file size and try again.`,
           );
         }
         if (json.message === "The total text length in the document exceeds the translation limit.") {
-        return new TranslationError(
-          TranslationErrorCode.MessageTooLarge,
-            "Error: The document contains too much text to translate. The maximum allowed text length is 100kB. Please shorten the text and try again.",
-        );
+          return new TranslationError(
+            TranslationErrorCode.MessageTooLarge,
+            `Error: The document contains too much text to translate. The maximum allowed text length is ${MAX_TEXT_LENGTH_KiB} KiB. Please shorten the text and try again.`,
+          );
         }
       }
 
