@@ -1,6 +1,7 @@
 import { ChangeEvent } from "react";
 import { Button } from "@mui/material";
 import { UploadFile } from "@mui/icons-material";
+import { MAX_CONTENT_LENGTH, MAX_CONTENT_LENGTH_MB } from "../translation/adapters/LindatApiV2Model";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -17,7 +18,6 @@ const allowedFileTypes = [
   "application/wps-office.docx",
 ];
 const allowedFileExtensions = [".txt", ".pdf", ".pptx", ".xlsx", ".docx"];
-const maxFileSizeMB = 5;
 const UploadButton = ({ onFileSelect }) => {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) {
@@ -30,8 +30,8 @@ const UploadButton = ({ onFileSelect }) => {
     }
     let file: File = event.target.files[0];
     // check file size
-    if (file.size > maxFileSizeMB * 1024 * 1024) {
-      toast.error(`File size exceeds ${maxFileSizeMB}MB`);
+    if (file.size > MAX_CONTENT_LENGTH) {
+      toast.error(`Error: File size exceeds ${MAX_CONTENT_LENGTH_MB}MB.`);
       return;
     }
     // check allowed file types

@@ -11,6 +11,9 @@ const BASE_API_URL = "http://localhost:5000/api/v2/languages/";
 
 const API_URL = BASE_API_URL + "?frontend=u4u";
 
+export const MAX_CONTENT_LENGTH = 5000 * 1024; // should match MAX_CONTENT_LENGTH in the backend
+export const MAX_CONTENT_LENGTH_MB = Math.round(MAX_CONTENT_LENGTH / 1e6);
+
 export class LindatApiV2Model implements TranslationStep {
   readonly origin: IsoLanguage;
   readonly target: IsoLanguage;
@@ -132,28 +135,37 @@ export class LindatApiV2Model implements TranslationStep {
       }
 
       if (response.status === 413) {
+        const json = await response.json();
+        if (json.message === "The data value transmitted exceeds the capacity limit.") {
+          return new TranslationError(
+            TranslationErrorCode.MessageTooLarge,
+            `Error: The document exceeds the maximum file size of ${MAX_CONTENT_LENGTH_MB}MB. Please reduce the file size and try again.`,
+          );
+        }
+        if (json.message === "The total text length in the document exceeds the translation limit.") {
         return new TranslationError(
           TranslationErrorCode.MessageTooLarge,
-          "Document to be translated is too large.",
+            "Error: The document contains too much text to translate. The maximum allowed text length is 100kB. Please shorten the text and try again.",
         );
+        }
       }
 
       if (response.status === 415) {
         return new TranslationError(
           TranslationErrorCode.UnsupportedFileType,
-          "Document file type is not supported.",
+          "Error: Document file type is not supported.",
         );
       }
       if (response.status === 504) {
         return new TranslationError(
           TranslationErrorCode.TranslationTimeout,
-          "Translation process took too long and timed out.",
+          "Error: Translation process took too long and timed out.",
         );
       }
 
       return new TranslationError(
         TranslationErrorCode.Failed,
-        "Translation backend responded with a non-200 status code.",
+        "Error: Translation backend responded with a non-200 status code.",
       );
     } catch (error) {
       return this.handleErrorResponse(error);
