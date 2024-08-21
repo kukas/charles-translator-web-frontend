@@ -668,7 +668,9 @@ const Form = () => {
                     {loadingError !== null ? (
                         <div className={styles.networkError}>
                             <ErrorOutlineIcon />
-                            <span>{loadingError !== '' ? loadingError : 'Translation error'}</span>
+                            <span style={{ textAlign: 'center' }}>
+                                {loadingError !== '' ? loadingError : 'Translation error'}
+                            </span>
                             <Button
                                 onClick={retryTranslation}
                             >
