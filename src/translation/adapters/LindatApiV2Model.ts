@@ -5,17 +5,47 @@ import { Translatable } from "../domain/Translatable";
 import { TranslationError } from "../domain/TranslationError";
 import { TranslationErrorCode } from "../domain/TranslationErrorCode";
 import { TranslationStep } from "../domain/TranslationStep";
+import { splitFilename } from "../../filenameUtils";
 
 // TODO: Replace this with the actual API URL
 const BASE_API_URL = "http://localhost:5000/api/v2/languages/";
 
 const API_URL = BASE_API_URL + "?frontend=u4u";
 
-export const MAX_CONTENT_LENGTH = 5 * 1024 * 1024; // should match MAX_CONTENT_LENGTH in the backend
+// should match MAX_CONTENT_LENGTH in the backend
+export const MAX_CONTENT_LENGTH = 5 * 1024 * 1024;
 export const MAX_CONTENT_LENGTH_MiB = MAX_CONTENT_LENGTH / 1024 / 1024;
 
-export const MAX_TEXT_LENGTH = 100 * 1024; // should match MAX_TEXT_LENGTH in the backend
+// should match MAX_TEXT_LENGTH in the backend
+export const MAX_TEXT_LENGTH = 100 * 1024;
 export const MAX_TEXT_LENGTH_KiB = MAX_TEXT_LENGTH / 1024;
+
+// should match ALLOWED_EXTENSIONS in the backend
+export const ALLOWED_EXTENSIONS = [
+  "txt",
+  "xml",
+  "html",
+  "htm",
+  "docx",
+  "odt",
+  "pptx",
+  "odp",
+  "xlsx",
+  "ods",
+];
+
+// should match ALLOWED_MIMETYPE in the backend
+export const ALLOWED_MIMETYPE = [
+  "text/plain",
+  "text/xml",
+  "text/html",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.oasis.opendocument.text",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.oasis.opendocument.presentation",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.oasis.opendocument.spreadsheet",
+];
 
 export class LindatApiV2Model implements TranslationStep {
   readonly origin: IsoLanguage;
@@ -126,12 +156,8 @@ export class LindatApiV2Model implements TranslationStep {
       if (response.ok) {
         const blob = await response.blob();
         const fullname = document.file.name;
-        let ext = fullname.split(".").pop();
-        if (ext == fullname || ext === undefined) {
-          ext = "";
-        }
-        const file = fullname.slice(0, fullname.length - ext.length - 1);
-        const new_name = file + "." + this.target + "." + ext;
+        const { name, ext } = splitFilename(fullname);
+        const new_name = `${name}.${this.target}.${ext}`;
         const translated_file = new File([blob], new_name, {
           type: blob.type,
         });
@@ -141,13 +167,19 @@ export class LindatApiV2Model implements TranslationStep {
 
       if (response.status === 413) {
         const json = await response.json();
-        if (json.message === "The data value transmitted exceeds the capacity limit.") {
+        if (
+          json.message ===
+          "The data value transmitted exceeds the capacity limit."
+        ) {
           return new TranslationError(
             TranslationErrorCode.MessageTooLarge,
             `Error: The document exceeds the maximum file size of ${MAX_CONTENT_LENGTH_MiB} MiB. Please reduce the file size and try again.`,
           );
         }
-        if (json.message === "The total text length in the document exceeds the translation limit.") {
+        if (
+          json.message ===
+          "The total text length in the document exceeds the translation limit."
+        ) {
           return new TranslationError(
             TranslationErrorCode.MessageTooLarge,
             `Error: The document contains too much text to translate. The maximum allowed text length is ${MAX_TEXT_LENGTH_KiB} KiB. Please shorten the text and try again.`,
@@ -156,9 +188,11 @@ export class LindatApiV2Model implements TranslationStep {
       }
 
       if (response.status === 415) {
+        const supportedExtensions = ALLOWED_EXTENSIONS.join(", ");
         return new TranslationError(
           TranslationErrorCode.UnsupportedFileType,
-          "Error: Document file type is not supported.",
+          "Error: Document file type is not supported. The supported extensions are: " +
+            supportedExtensions,
         );
       }
       if (response.status === 504) {
