@@ -32,6 +32,7 @@ export const ALLOWED_EXTENSIONS = [
   "odp",
   "xlsx",
   "ods",
+  "pdf",
 ];
 
 // should match ALLOWED_MIMETYPE in the backend
@@ -45,6 +46,7 @@ export const ALLOWED_MIMETYPE = [
   "application/vnd.oasis.opendocument.presentation",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/vnd.oasis.opendocument.spreadsheet",
+  "application/pdf"
 ];
 
 export class LindatApiV2Model implements TranslationStep {
